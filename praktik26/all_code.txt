@@ -1,0 +1,459 @@
+
+================================================================================
+ФАЙЛ: src\main\java\com\example\praktik26\Praktik26Application.java
+================================================================================
+
+package com.example.praktik26;
+
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+
+import javax.sql.DataSource;
+
+@SpringBootApplication
+public class Praktik26Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Praktik26Application.class, args);
+
+        System.out.println("=========================================");
+        System.out.println("ПРИЛОЖЕНИЕ ЗАПУЩЕНО УСПЕШНО!");
+        System.out.println("=========================================");
+        System.out.println("Доступные endpoints:");
+        System.out.println("  GET  http://localhost:8080/api/customers");
+        System.out.println("  POST http://localhost:8080/api/customers");
+        System.out.println("  PUT  http://localhost:8080/api/customers/{code}");
+        System.out.println("  GET  http://localhost:8080/api/lots");
+        System.out.println("  POST http://localhost:8080/api/lots");
+        System.out.println("=========================================");
+        System.out.println("Frontend доступен по адресу: http://localhost:3000");
+        System.out.println("=========================================");
+    }
+
+    @Bean
+    public DSLContext dslContext(DataSource dataSource, Environment environment) {
+        // Создаем DSLContext для работы с jOOQ
+        return DSL.using(dataSource,
+                org.jooq.SQLDialect.POSTGRES // или другой диалект, в зависимости от БД
+        );
+    }
+}
+
+================================================================================
+ФАЙЛ: src\main\java\com\example\praktik26\controller\PurchaseController.java
+================================================================================
+
+package com.example.praktik26.controller;
+
+import com.example.praktik26.dto.CustomerDto;
+import com.example.praktik26.dto.LotDto;
+import com.example.praktik26.service.PurchaseService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:3000") // Для React Frontend
+public class PurchaseController {
+
+    private final PurchaseService service;
+
+    // Конструктор вместо Lombok
+    public PurchaseController(PurchaseService service) {
+        this.service = service;
+    }
+
+    // --- Customers ---
+
+    @GetMapping("/customers")
+    public List<CustomerDto> getCustomers() {
+        return service.getAllCustomers();
+    }
+
+    @PostMapping("/customers")
+    public void createCustomer(@RequestBody CustomerDto customer) {
+        service.createCustomer(customer);
+    }
+
+    @PutMapping("/customers/{code}")
+    public void updateCustomer(@PathVariable("code") String code, @RequestBody CustomerDto customer) {
+        service.updateCustomer(code, customer);
+    }
+
+    // --- Lots ---
+
+    @GetMapping("/lots")
+    public List<LotDto> getLots() {
+        return service.getAllLots();
+    }
+
+    @PostMapping("/lots")
+    public void createLot(@RequestBody LotDto lot) {
+        service.createLot(lot);
+    }
+}
+
+================================================================================
+ФАЙЛ: src\main\java\com\example\praktik26\dto\CustomerDto.java
+================================================================================
+
+package com.example.praktik26.dto;
+
+public class CustomerDto {
+    private String customerCode;
+    private String customerName;
+    private String customerInn;
+    private String customerKpp;
+    private String email;
+    private Boolean isOrganization;
+    private Boolean isPerson;
+
+    // Пустой конструктор
+    public CustomerDto() {}
+
+    // Полный конструктор
+    public CustomerDto(String customerCode, String customerName, String customerInn, String customerKpp, String email, Boolean isOrganization, Boolean isPerson) {
+        this.customerCode = customerCode;
+        this.customerName = customerName;
+        this.customerInn = customerInn;
+        this.customerKpp = customerKpp;
+        this.email = email;
+        this.isOrganization = isOrganization;
+        this.isPerson = isPerson;
+    }
+
+    // Getters and Setters
+    public String getCustomerCode() { return customerCode; }
+    public void setCustomerCode(String customerCode) { this.customerCode = customerCode; }
+
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+
+    public String getCustomerInn() { return customerInn; }
+    public void setCustomerInn(String customerInn) { this.customerInn = customerInn; }
+
+    public String getCustomerKpp() { return customerKpp; }
+    public void setCustomerKpp(String customerKpp) { this.customerKpp = customerKpp; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public Boolean getIsOrganization() { return isOrganization; }
+    public void setIsOrganization(Boolean organization) { isOrganization = organization; }
+
+    public Boolean getIsPerson() { return isPerson; }
+    public void setIsPerson(Boolean person) { isPerson = person; }
+}
+
+
+================================================================================
+ФАЙЛ: src\main\java\com\example\praktik26\dto\LotDto.java
+================================================================================
+
+package com.example.praktik26.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+public class LotDto {
+    private Integer id;
+    private String lotName;
+    private String customerCode;
+    private BigDecimal price;
+    private String currencyCode;
+    private String ndsRate;
+    private LocalDateTime dateDelivery;
+
+    public LotDto() {}
+
+    public LotDto(Integer id, String lotName, String customerCode, BigDecimal price, String currencyCode, String ndsRate, LocalDateTime dateDelivery) {
+        this.id = id;
+        this.lotName = lotName;
+        this.customerCode = customerCode;
+        this.price = price;
+        this.currencyCode = currencyCode;
+        this.ndsRate = ndsRate;
+        this.dateDelivery = dateDelivery;
+    }
+
+    // Getters and Setters
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getLotName() { return lotName; }
+    public void setLotName(String lotName) { this.lotName = lotName; }
+
+    public String getCustomerCode() { return customerCode; }
+    public void setCustomerCode(String customerCode) { this.customerCode = customerCode; }
+
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+
+    public String getCurrencyCode() { return currencyCode; }
+    public void setCurrencyCode(String currencyCode) { this.currencyCode = currencyCode; }
+
+    public String getNdsRate() { return ndsRate; }
+    public void setNdsRate(String ndsRate) { this.ndsRate = ndsRate; }
+
+    public LocalDateTime getDateDelivery() { return dateDelivery; }
+    public void setDateDelivery(LocalDateTime dateDelivery) { this.dateDelivery = dateDelivery; }
+}
+
+================================================================================
+ФАЙЛ: src\main\java\com\example\praktik26\jooq\DefaultCatalog.java
+================================================================================
+
+/*
+ * This file is generated by jOOQ.
+ */
+package com.example.praktik26.jooq;
+
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.jooq.Constants;
+import org.jooq.Schema;
+import org.jooq.impl.CatalogImpl;
+
+
+/**
+ * This class is generated by jOOQ.
+ */
+@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+public class DefaultCatalog extends CatalogImpl {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * The reference instance of <code>DEFAULT_CATALOG</code>
+     */
+    public static final DefaultCatalog DEFAULT_CATALOG = new DefaultCatalog();
+
+    /**
+     * The schema <code>purchase</code>.
+     */
+    public final Purchase PURCHASE = Purchase.PURCHASE;
+
+    /**
+     * No further instances allowed
+     */
+    private DefaultCatalog() {
+        super("");
+    }
+
+    @Override
+    public final List<Schema> getSchemas() {
+        return Arrays.asList(
+            Purchase.PURCHASE
+        );
+    }
+
+    /**
+     * A reference to the 3.18 minor release of the code generator. If this
+     * doesn't compile, it's because the runtime library uses an older minor
+     * release, namely: 3.18. You can turn off the generation of this reference
+     * by specifying /configuration/generator/generate/jooqVersionReference
+     */
+    private static final String REQUIRE_RUNTIME_JOOQ_VERSION = Constants.VERSION_3_18;
+}
+
+
+================================================================================
+ФАЙЛ: src\main\java\com\example\praktik26\jooq\Purchase.java
+================================================================================
+
+/*
+ * This file is generated by jOOQ.
+ */
+package com.example.praktik26.jooq;
+
+
+
+
+import java.util.Arrays;
+import java.util.List;
+
+import com.example.praktik26.model.tables.Customer;
+import com.example.praktik26.model.tables.Lot;
+import org.jooq.Catalog;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+
+
+/**
+ * This class is generated by jOOQ.
+ */
+@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+public class Purchase extends SchemaImpl {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * The reference instance of <code>purchase</code>
+     */
+    public static final Purchase PURCHASE = new Purchase();
+
+    /**
+     * The table <code>purchase.customer</code>.
+     */
+    public final Customer CUSTOMER = Customer.CUSTOMER;
+
+    /**
+     * The table <code>purchase.lot</code>.
+     */
+    public final Lot LOT = Lot.LOT;
+
+    /**
+     * No further instances allowed
+     */
+    private Purchase() {
+        super("purchase", null);
+    }
+
+
+    @Override
+    public Catalog getCatalog() {
+        return DefaultCatalog.DEFAULT_CATALOG;
+    }
+
+    @Override
+    public final List<Table<?>> getTables() {
+        return Arrays.asList(
+            Customer.CUSTOMER,
+            Lot.LOT
+        );
+    }
+}
+
+
+================================================================================
+ФАЙЛ: src\main\java\com\example\praktik26\service\PurchaseService.java
+================================================================================
+
+package com.example.praktik26.service;
+
+
+import com.example.praktik26.dto.CustomerDto;
+import com.example.praktik26.dto.LotDto;
+import com.example.praktik26.model.tables.Customer;
+import com.example.praktik26.model.tables.Lot;
+import com.example.praktik26.model.tables.records.CustomerRecord;
+import com.example.praktik26.model.tables.records.LotRecord;
+import org.jooq.DSLContext;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class PurchaseService {
+
+    private final DSLContext dsl;
+
+    // Внедрение зависимости через конструктор (вместо @RequiredArgsConstructor Lombok)
+    public PurchaseService(DSLContext dsl) {
+        this.dsl = dsl;
+    }
+
+    // --- Customer Operations ---
+
+    public List<CustomerDto> getAllCustomers() {
+        return dsl.selectFrom(Customer.CUSTOMER)
+                .fetch()
+                .stream()
+                .map(this::mapToCustomerDto)
+                .collect(Collectors.toList());
+    }
+
+    public void createCustomer(CustomerDto dto) {
+        dsl.insertInto(Customer.CUSTOMER)
+                .set(Customer.CUSTOMER.CUSTOMER_CODE, dto.getCustomerCode())
+                .set(Customer.CUSTOMER.CUSTOMER_NAME, dto.getCustomerName())
+                .set(Customer.CUSTOMER.CUSTOMER_INN, dto.getCustomerInn())
+                .set(Customer.CUSTOMER.CUSTOMER_KPP, dto.getCustomerKpp())
+                .set(Customer.CUSTOMER.CUSTOMER_EMAIL, dto.getEmail())
+                .set(Customer.CUSTOMER.IS_ORGANIZATION, dto.getIsOrganization())
+                .set(Customer.CUSTOMER.IS_PERSON, dto.getIsPerson())
+                .execute();
+    }
+
+    public void updateCustomer(String code, CustomerDto dto) {
+        dsl.update(Customer.CUSTOMER)
+                .set(Customer.CUSTOMER.CUSTOMER_NAME, dto.getCustomerName())
+                .set(Customer.CUSTOMER.CUSTOMER_EMAIL, dto.getEmail())
+                .where(Customer.CUSTOMER.CUSTOMER_CODE.eq(code))
+                .execute();
+    }
+
+    // Маппер вручную
+    private CustomerDto mapToCustomerDto(CustomerRecord r) {
+        return new CustomerDto(
+                r.getCustomerCode(),
+                r.getCustomerName(),
+                r.getCustomerInn(),
+                r.getCustomerKpp(),
+                r.getCustomerEmail(),
+                r.getIsOrganization(),
+                r.getIsPerson()
+        );
+    }
+
+    // --- Lot Operations ---
+
+    public List<LotDto> getAllLots() {
+        return dsl.selectFrom(Lot.LOT)
+                .fetch()
+                .stream()
+                .map(this::mapToLotDto)
+                .collect(Collectors.toList());
+    }
+
+    public void createLot(LotDto dto) {
+        dsl.insertInto(Lot.LOT)
+                .set(Lot.LOT.LOT_NAME, dto.getLotName())
+                .set(Lot.LOT.CUSTOMER_CODE, dto.getCustomerCode())
+                .set(Lot.LOT.PRICE, dto.getPrice())
+                .set(Lot.LOT.CURRENCY_CODE, dto.getCurrencyCode())
+                .set(Lot.LOT.NDS_RATE, dto.getNdsRate())
+                .set(Lot.LOT.DATE_DELIVERY, dto.getDateDelivery())
+                .execute();
+    }
+
+    private LotDto mapToLotDto(LotRecord r) {
+        return new LotDto(
+                r.getLotId(),
+                r.getLotName(),
+                r.getCustomerCode(),
+                r.getPrice(),
+                r.getCurrencyCode(),
+                r.getNdsRate(),
+                r.getDateDelivery()
+        );
+    }
+}
+
+
+================================================================================
+ФАЙЛ: src\test\java\com\example\praktik26\Praktik26ApplicationTests.java
+================================================================================
+
+package com.example.praktik26;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class Praktik26ApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
+
+}
+
